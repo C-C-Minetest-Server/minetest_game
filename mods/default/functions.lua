@@ -693,7 +693,7 @@ function default.register_craft_metadata_copy(ingredient, result)
 	})
 
 	minetest.register_on_craft(function(itemstack, player, old_craft_grid, craft_inv)
-		if itemstack:get_name() ~= result then
+		if (itemstack.get_name and itemstack:get_name()) ~= result then
 			return
 		end
 
