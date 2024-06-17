@@ -293,12 +293,26 @@ minetest.register_abm({
 -- Dig upwards
 --
 
-function default.dig_up(pos, node, digger)
+local in_dig_up = false
+local mapgen_limit = tonumber(minetest.settings:get("mapgen_limit")) or 31007
+function default.dig_up(pos, node, digger, max_height)
+	if in_dig_up then return end -- Avoid excess calls
 	if digger == nil then return end
-	local np = {x = pos.x, y = pos.y + 1, z = pos.z}
-	local nn = minetest.get_node(np)
-	if nn.name == node.name then
-		minetest.node_dig(np, nn, digger)
+	max_height = max_height or mapgen_limit
+
+	for y = pos.y + 1, math.min(pos.y + max_height, mapgen_limit) do
+		local up_pos  = { x = pos.x, y = y, z = pos.z}
+		local up_node = minetest.get_node(up_pos)
+		if up_node.name == node.name then
+			in_dig_up = true
+			if not minetest.dig_node(up_pos, digger) then
+				in_dig_up = false
+				break
+			end
+			in_dig_up = false
+		else
+			break
+		end
 	end
 end
 
@@ -309,14 +323,6 @@ end
 local fence_collision_extra = minetest.settings:get_bool("enable_fence_tall") and 3/8 or 0
 
 function default.register_fence(name, def)
-	minetest.register_craft({
-		output = name .. " 4",
-		recipe = {
-			{ def.material, 'group:stick', def.material },
-			{ def.material, 'group:stick', def.material },
-		}
-	})
-
 	local fence_texture = "default_fence_overlay.png^" .. def.texture ..
 			"^default_fence_overlay.png^[makealpha:255,126,126"
 	-- Allow almost everything to be overridden
@@ -364,10 +370,24 @@ function default.register_fence(name, def)
 	-- Always add to the fence group, even if no group provided
 	def.groups.fence = 1
 
+	local material = def.material
 	def.texture = nil
 	def.material = nil
 
 	minetest.register_node(name, def)
+
+	-- Register crafting recipe, trim away starting colon if any
+	if not material then return end
+	if string.sub(name, 1,1) == ":" then
+		name = string.sub(name, 2)
+	end
+	minetest.register_craft({
+		output = name .. " 4",
+		recipe = {
+			{ material, 'group:stick', material },
+			{ material, 'group:stick', material },
+		}
+	})
 end
 
 
@@ -376,15 +396,6 @@ end
 --
 
 function default.register_fence_rail(name, def)
-	minetest.register_craft({
-		output = name .. " 16",
-		recipe = {
-			{ def.material, def.material },
-			{ "", ""},
-			{ def.material, def.material },
-		}
-	})
-
 	local fence_rail_texture = "default_fence_rail_overlay.png^" .. def.texture ..
 			"^default_fence_rail_overlay.png^[makealpha:255,126,126"
 	-- Allow almost everything to be overridden
@@ -433,10 +444,25 @@ function default.register_fence_rail(name, def)
 	-- Always add to the fence group, even if no group provided
 	def.groups.fence = 1
 
+	local material = def.material
 	def.texture = nil
 	def.material = nil
 
 	minetest.register_node(name, def)
+
+	-- Register crafting recipe, trim away starting colon if any
+	if not material then return end
+	if string.sub(name, 1,1) == ":" then
+		name = string.sub(name, 2)
+	end
+	minetest.register_craft({
+		output = name .. " 16",
+		recipe = {
+			{ material, material },
+			{ "", ""},
+			{ material, material },
+		}
+	})
 end
 
 --
@@ -444,15 +470,6 @@ end
 --
 
 function default.register_mesepost(name, def)
-	minetest.register_craft({
-		output = name .. " 4",
-		recipe = {
-			{'', 'default:glass', ''},
-			{'default:mese_crystal', 'default:mese_crystal', 'default:mese_crystal'},
-			{'', def.material, ''},
-		}
-	})
-
 	local post_texture = def.texture .. "^default_mese_post_light_side.png^[makealpha:0,0,0"
 	local post_texture_dark = def.texture .. "^default_mese_post_light_side_dark.png^[makealpha:0,0,0"
 	-- Allow almost everything to be overridden
@@ -480,10 +497,25 @@ function default.register_mesepost(name, def)
 		end
 	end
 
+	local material = def.material
 	def.texture = nil
 	def.material = nil
 
 	minetest.register_node(name, def)
+
+	-- Register crafting recipe, trim away starting colon if any
+	if not material then return end
+	if string.sub(name, 1,1) == ":" then
+		name = string.sub(name, 2)
+	end
+	minetest.register_craft({
+		output = name .. " 4",
+		recipe = {
+			{'', 'default:glass', ''},
+			{'default:mese_crystal', 'default:mese_crystal', 'default:mese_crystal'},
+			{'', material, ''},
+		}
+	})
 end
 
 --
