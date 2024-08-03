@@ -135,6 +135,7 @@ local function furnace_node_timer(pos, elapsed)
 
 	local update = true
 	local items_smelt = 0
+	local items_smelt = 0
 	while elapsed > 0 and update do
 		update = false
 
@@ -172,6 +173,7 @@ local function furnace_node_timer(pos, elapsed)
 					else
 						dst_full = true
 					end
+					items_smelt = items_smelt + 1
 					items_smelt = items_smelt + 1
 				else
 					-- Item could not be cooked: probably missing fuel
@@ -339,6 +341,12 @@ local function apply_logger(def)
 end
 
 minetest.register_node("default:furnace", apply_logger({
+local function apply_logger(def)
+	default.set_inventory_action_loggers(def, "furnace")
+	return def
+end
+
+minetest.register_node("default:furnace", apply_logger({
 	description = S("Furnace"),
 	tiles = {
 		"default_furnace_top.png", "default_furnace_bottom.png",
@@ -389,7 +397,9 @@ minetest.register_node("default:furnace", apply_logger({
 	allow_metadata_inventory_move = allow_metadata_inventory_move,
 	allow_metadata_inventory_take = allow_metadata_inventory_take,
 }))
+}))
 
+minetest.register_node("default:furnace_active", apply_logger({
 minetest.register_node("default:furnace_active", apply_logger({
 	description = S("Furnace"),
 	tiles = {
@@ -424,6 +434,7 @@ minetest.register_node("default:furnace_active", apply_logger({
 	allow_metadata_inventory_put = allow_metadata_inventory_put,
 	allow_metadata_inventory_move = allow_metadata_inventory_move,
 	allow_metadata_inventory_take = allow_metadata_inventory_take,
+}))
 }))
 
 minetest.register_craft({
