@@ -305,22 +305,34 @@ function default.dig_up(pos, node, digger, max_height)
 	if digger == nil then return end
 	max_height = max_height or 100
 
+	in_dig_up = true
 	for y = pos.y + 1, pos.y + max_height do
 		local up_pos  = vector.new(pos.x, y, pos.z)
 		local up_node = minetest.get_node(up_pos)
-		if up_node.name == node.name then
-			in_dig_up = true
-			if not minetest.dig_node(up_pos, digger) then
-				in_dig_up = false
-				break
-			end
+		if up_node.name ~= node.name then
+			break
+		end
+		local noerr, success = xpcall(function()
+			return minetest.dig_node(up_pos, digger)
+		end, function(...)
 			in_dig_up = false
-		else
+			local errmsg = "Error raised during `default.dig_up` call: " .. minetest.error_handler(...)
+			for line in errmsg:gmatch("([^\n]*)\n?") do
+				minetest.log("error", line)
+			end
+		end)
+		if not noerr then
+			error("Error raised during `default.dig_up` call")
+		elseif not success then
 			break
 		end
 	end
+	in_dig_up = false
 end
 
+minetest.register_globalstep(function()
+	in_dig_up = false
+end)
 
 --
 -- Fence registration helper
